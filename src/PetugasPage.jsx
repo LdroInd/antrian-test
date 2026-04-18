@@ -2,7 +2,7 @@ import { useQueue } from './QueueContext';
 import { Link } from 'react-router-dom';
 
 export default function PetugasPage() {
-  const { queue, nextNumber, currentServing, takeNumber, callNext, skipNumber, resetQueue } = useQueue();
+  const { queue, nextNumber, currentServing, takeNumber, callNext, recallCurrent, skipNumber, resetQueue } = useQueue();
 
   return (
     <div className="app">
@@ -21,6 +21,7 @@ export default function PetugasPage() {
       <div className="actions">
         <button className="btn btn-take" onClick={takeNumber}>🎟️ Ambil Antrian</button>
         <button className="btn btn-call" onClick={callNext} disabled={queue.length === 0}>📢 Panggil Berikutnya</button>
+        <button className="btn btn-recall" onClick={recallCurrent} disabled={!currentServing}>🔊 Panggil Ulang</button>
         <button className="btn btn-skip" onClick={skipNumber} disabled={queue.length === 0}>⏭️ Lewati</button>
         <button className="btn btn-reset" onClick={resetQueue}>🔄 Reset</button>
       </div>

@@ -341,3 +341,23 @@ body {
     gap: 12px;
   }
 }
+
+/* Recall Button */
+.btn-recall {
+  background: #8B5CF6;
+  color: #fff;
+}
+
+/* Display Serving Animation */
+.display-serving-animate {
+  animation: pulse-glow 2s ease-out;
+}
+
+@keyframes pulse-glow {
+  0% { transform: scale(1); }
+  15% { transform: scale(1.05); box-shadow: 0 0 40px rgba(255, 215, 0, 0.6); }
+  30% { transform: scale(1); }
+  45% { transform: scale(1.03); box-shadow: 0 0 30px rgba(255, 215, 0, 0.4); }
+  60% { transform: scale(1); box-shadow: none; }
+  100% { transform: scale(1); }
+}

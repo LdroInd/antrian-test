@@ -1,13 +1,31 @@
+import { useEffect, useRef, useState } from 'react';
 import { useQueue } from './QueueContext';
+import { dingThenSpeak } from './speak';
 
 export default function DisplayPage() {
-  const { queue, currentServing } = useQueue();
+  const { queue, currentServing, announceNumber } = useQueue();
+  const lastAnnounceRef = useRef(null);
+  const [animating, setAnimating] = useState(false);
+
+  // Play sound when announceNumber changes
+  useEffect(() => {
+    if (!announceNumber) return;
+    if (lastAnnounceRef.current === announceNumber.ts) return;
+    lastAnnounceRef.current = announceNumber.ts;
+
+    // Trigger animation
+    setAnimating(true);
+    setTimeout(() => setAnimating(false), 2000);
+
+    // Play ding + speech
+    dingThenSpeak(announceNumber.number);
+  }, [announceNumber]);
 
   return (
     <div className="display-page">
       <h1 className="display-title">Antrian</h1>
 
-      <div className="display-serving">
+      <div className={`display-serving ${animating ? 'display-serving-animate' : ''}`}>
         <p className="display-serving-label">NOMOR ANTRIAN</p>
         <div className="display-serving-number">
           {currentServing ? String(currentServing).padStart(3, '0') : '---'}

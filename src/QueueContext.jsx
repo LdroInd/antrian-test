@@ -7,10 +7,10 @@ export function QueueProvider({ children }) {
   const [queue, setQueue] = useState([]);
   const [nextNumber, setNextNumber] = useState(1);
   const [currentServing, setCurrentServing] = useState(null);
+  const [announceNumber, setAnnounceNumber] = useState(null);
   const channelRef = useRef(null);
   const isRemoteUpdate = useRef(false);
 
-  // Setup BroadcastChannel
   useEffect(() => {
     const ch = new BroadcastChannel(CHANNEL_NAME);
     channelRef.current = ch;
@@ -23,18 +23,17 @@ export function QueueProvider({ children }) {
         setNextNumber(data.nextNumber);
         setCurrentServing(data.currentServing);
       } else if (type === 'request-sync') {
-        // Tab baru minta data, kirim state saat ini
         broadcastState();
+      } else if (type === 'call-announce') {
+        // Trigger suara di tab lain (display)
+        setAnnounceNumber({ number: data.number, ts: Date.now() });
       }
     };
 
-    // Minta sync dari tab yang sudah ada
     ch.postMessage({ type: 'request-sync' });
-
     return () => ch.close();
   }, []);
 
-  // Broadcast state ke semua tab setiap kali berubah
   const broadcastState = useCallback(() => {
     channelRef.current?.postMessage({
       type: 'sync',
@@ -50,6 +49,12 @@ export function QueueProvider({ children }) {
     broadcastState();
   }, [queue, nextNumber, currentServing, broadcastState]);
 
+  const broadcastAnnounce = useCallback((number) => {
+    channelRef.current?.postMessage({ type: 'call-announce', data: { number } });
+    // Also trigger locally
+    setAnnounceNumber({ number, ts: Date.now() });
+  }, []);
+
   const takeNumber = useCallback(() => {
     const number = nextNumber;
     setQueue(prev => [...prev, number]);
@@ -58,9 +63,16 @@ export function QueueProvider({ children }) {
 
   const callNext = useCallback(() => {
     if (queue.length === 0) return;
-    setCurrentServing(queue[0]);
+    const num = queue[0];
+    setCurrentServing(num);
     setQueue(prev => prev.slice(1));
-  }, [queue]);
+    broadcastAnnounce(num);
+  }, [queue, broadcastAnnounce]);
+
+  const recallCurrent = useCallback(() => {
+    if (!currentServing) return;
+    broadcastAnnounce(currentServing);
+  }, [currentServing, broadcastAnnounce]);
 
   const skipNumber = useCallback(() => {
     if (queue.length === 0) return;
@@ -77,8 +89,8 @@ export function QueueProvider({ children }) {
 
   return (
     <QueueContext.Provider value={{
-      queue, nextNumber, currentServing,
-      takeNumber, callNext, skipNumber, resetQueue,
+      queue, nextNumber, currentServing, announceNumber,
+      takeNumber, callNext, recallCurrent, skipNumber, resetQueue,
     }}>
       {children}
     </QueueContext.Provider>
